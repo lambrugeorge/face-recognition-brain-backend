@@ -5,6 +5,9 @@
   "scripts": {
     "start": "nodemon server.js"
   },
+  "render": {
+  "startCommand": "npm start"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
