@@ -9,11 +9,19 @@ const knex = require('knex')
 const db = knex({
   client: "pg",
   connection: {
+<<<<<<< HEAD
     host : '127.0.0.1',
     port : 5432,
     user : 'postgres',
     password : '1234',
     database : 'smart-brain'
+=======
+    host: 'dpg-cn94470l5elc7390s5u0-a',
+    port: 5432,
+    user: 'db_3zej_user',
+    password: 'YVNaLLFbWOXcozhtWDMTjQ2FTbp838d1',
+    database: 'db_3zej'
+>>>>>>> 0f17b53c10d621f4acb81e4e2648f4f189612311
   }
 });
 
@@ -130,6 +138,15 @@ app.get('/profile/:id', (req, res) => {
   });
   
 
+<<<<<<< HEAD
 app.listen(3000, () => {
     console.log('App is running on port 3000');
 });
+=======
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`App is running on port ${PORT}`);
+});
+
+>>>>>>> 0f17b53c10d621f4acb81e4e2648f4f189612311
