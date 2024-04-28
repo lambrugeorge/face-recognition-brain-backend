@@ -5,14 +5,15 @@ const cors = require('cors');
 const knex = require('knex');
 
 const db = knex({
-  client: "pg",
+  client: 'pg',
   connection: {
-    connectionString: 'postgres://db_3zej_user:YVNaLLFbWOXcozhtWDMTjQ2FTbp838d1@dpg-cn94470l5elc7390s5u0-a.oregon-postgres.render.com/db_3zej',
+    connectionString: process.env.DATABASE_URL,
     ssl: {
-      rejectUnauthorized: false
-    }
-  }
+      rejectUnauthorized: false,
+    },
+  },
 });
+
 
 
 const app = express();
