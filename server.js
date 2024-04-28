@@ -7,12 +7,17 @@ const knex = require('knex');
 const db = knex({
   client: 'pg',
   connection: {
-    connectionString: process.env.DATABASE_URL,
+    host : 'dpg-cn94470l5elc7390s5u0-a.oregon-postgres.render.com',
+    port : 5432,
+    user : 'db_3zej_user',
+    password : 'YVNaLLFbWOXcozhtWDMTjQ2FTbp838d1',
+    database : 'db_3zej',
     ssl: {
-      rejectUnauthorized: false,
-    },
-  },
+      rejectUnauthorized: false
+    }
+  }
 });
+
 
 
 
