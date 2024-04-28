@@ -7,12 +7,13 @@ const knex = require('knex');
 const db = knex({
   client: "pg",
   connection: {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: 'postgres://db_3zej_user:YVNaLLFbWOXcozhtWDMTjQ2FTbp838d1@dpg-cn94470l5elc7390s5u0-a.oregon-postgres.render.com/db_3zej',
     ssl: {
       rejectUnauthorized: false
     }
   }
 });
+
 
 const app = express();
 
