@@ -4,7 +4,7 @@
   "main": "script.js",
   "scripts": {
     "start": "nodemon server.js",
-    "build": "npm run build"
+    "build": "CI= yarn build"
   },
   "keywords": [],
   "author": "",
