@@ -2,10 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
+const fetch = require('node-fetch'); // Asigură-te că ai instalat acest pachet
 const { db, initializeDatabase, testConnection } = require('./database');
-
-
-
 
 const app = express();
 
@@ -21,7 +19,8 @@ app.get('/', (req, res) => {
       register: 'POST /register',
       signin: 'POST /signin',
       imageUrl: 'PUT /imageUrl',
-      getimages: 'POST /getimages'
+      getimages: 'POST /getimages',
+      detectFace: 'POST /detect-face'
     }
   });
 });
@@ -31,7 +30,7 @@ async function startServer() {
   try {
     await initializeDatabase();
     await testConnection();
-    
+
     app.listen(3001, () => {
       console.log('🚀 Serverul rulează pe portul 3001');
       console.log('📱 Frontend: http://localhost:3000');
@@ -46,6 +45,7 @@ async function startServer() {
 // Pornesc serverul
 startServer();
 
+// Endpoint pentru înregistrare
 app.post('/register', (req, res) => {
   const { email, password, name } = req.body;
 
@@ -61,52 +61,66 @@ app.post('/register', (req, res) => {
       hash: hash,
       email: email
     })
-    .into('login')
-    .returning('email')
-    .then(loginEmail => {
-      return trx('users')
-        .returning('*')
-        .insert({
-          email: loginEmail[0].email,
-          name: name,
-          joined: new Date()
-        })
-        .then(user => {
-          res.json(user[0]);
-        });
-    })
-    .then(trx.commit)
-    .catch(trx.rollback);
+      .into('login')
+      .returning('email')
+      .then(loginEmail => {
+        return trx('users')
+          .returning('*')
+          .insert({
+            email: loginEmail[0].email,
+            name: name,
+            joined: new Date()
+          })
+          .then(user => {
+            res.json(user[0]);
+          });
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
   })
-  .catch(err => res.status(400).json('Unable to register'));
+    .catch(err => res.status(400).json('Unable to register'));
 });
 
+// Endpoint pentru autentificare
 app.post('/signin', (req, res) => {
   const { email, password } = req.body;
-  
+
+  if (!email || !password) {
+    return res.status(400).json('Incorrect form submission');
+  }
+
   db.select('email', 'hash')
     .from('login')
     .where('email', '=', email)
     .then(data => {
-      const isValid = bcrypt.compareSync(password, data[0].hash);
-      if (isValid) {
-        return db.select('*')
-          .from('users')
-          .where('email', '=', email)
-          .then(user => {
-            res.json(user[0]);
-          })
-          .catch(err => res.status(400).json('Unable to get user'));
+      if (data.length) {
+        const isValid = bcrypt.compareSync(password, data[0].hash);
+        if (isValid) {
+          return db.select('*')
+            .from('users')
+            .where('email', '=', email)
+            .then(user => {
+              res.json(user[0]);
+            })
+            .catch(err => res.status(400).json('Unable to get user'));
+        } else {
+          res.status(400).json('Wrong credentials');
+        }
       } else {
         res.status(400).json('Wrong credentials');
       }
     })
-    .catch(err => res.status(400).json('Wrong credentials'));
+    .catch(err => res.status(400).json('Error during signin'));
 });
 
+// Endpoint pentru actualizarea numărului de intrări
 app.put('/imageUrl', (req, res) => {
   const { id } = req.body;
-  
+
+  if (!id) {
+    return res.status(400).json('ID is required');
+  }
+
   db('users')
     .where('id', '=', id)
     .increment('entries', 1)
@@ -117,34 +131,19 @@ app.put('/imageUrl', (req, res) => {
     .catch(err => res.status(400).json('Unable to get entries'));
 });
 
-app.post('/getimages', (req, res) => {
-  const { id } = req.body;
-  
-  db.select('*')
-    .from('users')
-    .where('id', '=', id)
-    .then(user => {
-      if (user.length) {
-        res.json(user[0]);
-      } else {
-        res.status(400).json('User not found');
-      }
-    })
-    .catch(err => res.status(400).json('Error getting user'));
-});
-
 // Endpoint pentru detectarea fețelor cu Clarifai
 app.post('/detect-face', (req, res) => {
   const { imageUrl } = req.body;
-  
+
   if (!imageUrl) {
     return res.status(400).json('Image URL is required');
   }
 
-  const PAT = '9c7219e644ea4fd4adf6d794da3fa513';
+  const PAT = '9c7219e644ea4fd4adf6d794da3fa513'; // Verifică dacă este corect
   const USER_ID = 'hgrj4h0f2cht';
   const APP_ID = 'my-first-application-1s0io';
-  const MODEL_ID = 'a403429f2ddf4b49b307e318f00e528b';
+  const MODEL_ID = 'aa7f35c01e0642fda5cf400f543e7c40'; // Model corect
+  const VERSION_ID = 'aa7f35c01e0642fda5cf400f543e7c40'; // Version ID corect
 
   const raw = JSON.stringify({
     "user_app_id": {
@@ -171,14 +170,19 @@ app.post('/detect-face', (req, res) => {
     body: raw
   };
 
-  fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/outputs", requestOptions)
+  fetch(`https://api.clarifai.com/v2/models/${MODEL_ID}/versions/${VERSION_ID}/outputs`, requestOptions)
     .then(response => response.json())
     .then(result => {
-      res.json(result);
+      if (result.outputs && result.outputs.length > 0) {
+        res.json(result.outputs[0].data);
+      } else {
+        res.status(400).json('No face detected');
+      }
     })
     .catch(error => {
       console.error('Clarifai API Error:', error);
       res.status(500).json('Error detecting face');
     });
 });
+
 
